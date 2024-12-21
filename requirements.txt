@@ -1,3 +1,5 @@
 sqlalchemy
 PyQt5
 bcrypt
+pyjwt
+werkzeug

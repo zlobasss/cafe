@@ -1,7 +1,13 @@
-# models/user.py
+# model/user.py
 from sqlalchemy import Column, Integer, String, Boolean, Enum
 from sqlalchemy.orm import relationship
+from enum import Enum as PyEnum
 from model import Base
+
+class Role(PyEnum):
+    ADMIN = "Администратор"
+    WAITER = "Официант"
+    COOK = "Повар"
 
 class User(Base):
     __tablename__ = 'users'
@@ -12,8 +18,11 @@ class User(Base):
     second_name = Column(String)
     username = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(Enum('Администратор', 'Официант', 'Повар', name='role_enum'), nullable=False)
+    role = Column(Enum(Role), nullable=False)
     is_active = Column(Boolean, default=True)
     contact_details = Column(String)
     photo_path = Column(String)
     contract_path = Column(String)
+
+    shifts = relationship('Shift', back_populates='admin')
+    shift_employees = relationship('ShiftEmployee', back_populates='user')

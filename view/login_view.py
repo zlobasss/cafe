@@ -44,6 +44,8 @@ class LoginView(QWidget):
         self.layout.addWidget(self.empty_last)
 
         self.setLayout(self.layout)
+
+        self.check_session()
         
 
     def apply_styles(self):
@@ -67,22 +69,39 @@ class LoginView(QWidget):
         user = UserService.find_by_username(username)
 
         if user and UserService.verify_password(user.password, password):
+            if not user.is_active:
+                QMessageBox.warning(self, "Ошибка", "Вы были уволены!")
+                return
+            token = UserService.generate_token(user.id)
             QMessageBox.information(self, "Успех", "Авторизация успешна!")
-            self.show_main_view()  # Переход к главному окну
+            self.store_session(token)  # Сохранение токена в сессии
+            self.check_session()
         else:
             QMessageBox.warning(self, "Ошибка", "Неверные данные!")
 
+    def store_session(self, token: str):
+        with open("session.txt", "w") as file:
+            file.write(token)
+
+    def check_session(self):
+        try:
+            with open("session.txt", "r") as file:
+                token = file.read()
+            payload = UserService.verify_token(token)
+            user_id = payload["user_id"]
+            # Если токен валиден, сразу переходим в главное окно
+            self.show_main_view()
+            return True
+        except (FileNotFoundError, ValueError):
+            # Если токен отсутствует или невалиден, показываем экран авторизации
+            print("Сессия неактивна")
+            self.show()
+            return False
+
     def show_main_view(self):
         # Скрытие текущего окна (экран авторизации)
-        self.hide()
+        self.close()
 
-        self.main_view.show()
-
-def main():
-    app = QApplication(sys.argv)
-    login_view = LoginView()
-    login_view.show()
-    sys.exit(app.exec_())
-
-if __name__ == "__main__":
-    main()
+        from view.main_window import MainWindow
+        self.main_window = MainWindow()
+        self.main_window.show()
