@@ -1,3 +1,5 @@
+# view/employee_card.py
+
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QMessageBox
 from PyQt5.QtCore import Qt, pyqtSignal
 from service.user_service import UserService

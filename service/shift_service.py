@@ -1,8 +1,12 @@
 # service/shift_service.py
+
 from model.shift import Shift
 from model.shift_employee import ShiftEmployee
-from sqlalchemy.orm import Session
+from model.user import User
 from database import Database
+from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
+from sqlalchemy import and_
 
 db = Database.get_session()
 
@@ -29,6 +33,27 @@ class ShiftService:
     def get_shift_by_id(shift_id):
         return db.query(Shift).filter(Shift.id == shift_id).first()
 
+    @staticmethod
+    def get_shifts_by_user_id(user_id):
+        current_time = datetime.now()
+        current_date = datetime.now().date()
+        start_buffer = current_time - timedelta(hours=1)
+        end_buffer = current_time + timedelta(hours=1)
+
+        shifts = (
+            db.query(ShiftEmployee)
+            .join(Shift, Shift.id == ShiftEmployee.shift_id)
+            .filter(
+                ShiftEmployee.user_id == user_id,
+                Shift.shift_date == current_date,
+                Shift.start_time <= start_buffer.time(),  # Время начала меньше текущего минус 1 час
+                Shift.end_time >= end_buffer.time()       # Время окончания больше текущего плюс 1 час
+            )
+            .options(joinedload(ShiftEmployee.shift))  # Подгружает связанные смены
+            .all()
+        )
+        return shifts
+    
     @staticmethod
     def get_all_shifts(page=1, page_size=10):
         """

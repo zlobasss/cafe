@@ -1,3 +1,5 @@
+# view/employee_choose.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QHBoxLayout, QLabel, QAbstractItemView, QHeaderView, QMessageBox
 )

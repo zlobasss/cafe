@@ -9,6 +9,10 @@ class Role(PyEnum):
     WAITER = "Официант"
     COOK = "Повар"
 
+    @staticmethod
+    def get_name_from_value(value):
+        return next((role.name for role in Role if role.value == value), None)
+
 class User(Base):
     __tablename__ = 'users'
 

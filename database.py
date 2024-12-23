@@ -1,7 +1,7 @@
 # database.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from model import Base, User, Shift, ShiftEmployee
+from model import Base, User, Shift, ShiftEmployee, Table, MenuItem, Order, OrderItem
 
 # Настройки базы данных
 engine = create_engine("sqlite:///cafe.db")

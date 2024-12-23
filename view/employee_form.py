@@ -1,10 +1,11 @@
+# view/employee_form.py
+
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QFileDialog, QMessageBox, QComboBox
 from PyQt5.QtCore import Qt, pyqtSignal
-from model.user import User
+from model.user import User, Role
 from service.user_service import UserService
 
 class EmployeeForm(QWidget):
-
     switch_to_list_signal = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -43,9 +44,8 @@ class EmployeeForm(QWidget):
         self.password_field.setEchoMode(QLineEdit.Password)
         self.layout.addWidget(self.password_field)
 
-        # Роль
         self.role_field = QComboBox(self)
-        self.role_field.addItems(["Администратор", "Официант", "Повар"])
+        self.role_field.addItems([role.value for role in Role])  # Динамически добавляем роли из перечисления Role
         self.layout.addWidget(self.role_field)
 
         # Загрузка фото
@@ -84,41 +84,54 @@ class EmployeeForm(QWidget):
         if file_path:
             self.photo_path = file_path
             self.photo_label.setText(f"Фото: {file_path}")
+        else:
+            QMessageBox.warning(self, "Ошибка", "Вы не выбрали файл для фото сотрудника.")
 
     def upload_contract(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Выберите трудовой договор", "", "Документы (*.pdf *.docx)")
         if file_path:
             self.contract_path = file_path
             self.contract_label.setText(f"Договор: {file_path}")
+        else:
+            QMessageBox.warning(self, "Ошибка", "Вы не выбрали файл для трудового договора.")
 
     def save_employee(self):
-        first_name = self.first_name_field.text()
-        last_name = self.last_name_field.text()
-        second_name = self.second_name_field.text()
-        contact_details = self.contact_details_field.text()
-        username = self.username_field.text()
-        password = self.password_field.text()
+        first_name = self.first_name_field.text().strip()
+        last_name = self.last_name_field.text().strip()
+        second_name = self.second_name_field.text().strip()
+        contact_details = self.contact_details_field.text().strip()
+        username = self.username_field.text().strip()
+        password = self.password_field.text().strip()
         role = self.role_field.currentText()
 
-        if not all([first_name, last_name, role, username, password]):
+        if not all([first_name, last_name, username, password]):
             QMessageBox.warning(self, "Ошибка", "Пожалуйста, заполните все обязательные поля!")
             return
 
-        new_user = User(
-            first_name=first_name,
-            last_name=last_name,
-            second_name=second_name,
-            contact_details=contact_details,
-            username=username,
-            password=password,
-            role=role,
-            photo_path=self.photo_path,
-            contract_path=self.contract_path
-        )
+        if UserService.find_by_username(username):
+            QMessageBox.warning(self, "Ошибка", "Пользователь с таким логином уже существует!")
+            return
 
-        UserService.create_user(new_user)
-        QMessageBox.information(self, "Успех", "Сотрудник успешно добавлен!")
-        self.close_form
+        try:
+            new_user = User(
+                first_name=first_name,
+                last_name=last_name,
+                second_name=second_name,
+                contact_details=contact_details,
+                username=username,
+                password=password,
+                role=Role.get_name_from_value(role),
+                photo_path=self.photo_path,
+                contract_path=self.contract_path
+            )
+
+            print(role)
+
+            UserService.create_user(new_user)
+            QMessageBox.information(self, "Успех", "Сотрудник успешно добавлен!")
+            self.close_form()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при сохранении сотрудника: {str(e)}")
 
     def close_form(self):
         self.clear_form()
